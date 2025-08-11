@@ -5,23 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>動画区間リピートプレイヤー</title>
   <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="style_sp.css" media="(max-width:639px)" />
 </head>
 <body>
   <div id="container">
-<h1>
-  動画区間リピートプレイヤー
-  <button id="themeToggleBtn" aria-label="テーマ切替" title="ライト/ダーク切り替え" style="font-size:14px; padding:4px 10px; margin-left:12px;">🌙</button>
-</h1>
+    <h1>
+      動画区間リピートプレイヤー
+      <button id="themeToggleBtn" aria-label="テーマ切替" title="ライト/ダーク切り替え" style="font-size:14px; padding:4px 10px; margin-left:12px;">🌙</button>
+    </h1>
     <input type="file" id="videoInput" accept="video/*" />
     <video id="videoPlayer" width="640" playsinline webkit-playsinline></video>
 
-    <div id="progressBarContainer" title="クリックして開始/終了位置を設定"></div>
+    <div id="progressBarContainer" title="クリックやドラッグで再生位置を移動できます"></div>
     <div id="timeDisplay">00:00 / 00:00</div>
 
-    <p>バーをクリックしてリピート開始/終了を設定。<br>
-      <strong>Zキー</strong>で開始位置設定、<strong>Xキー</strong>で終了位置設定、<strong>Cキー</strong>でリピート区間リセット。<br>
-      <strong>Vキー</strong>で開始位置に移動、<strong>スペースキー</strong>で再生/停止。</p>
+    <p>
+      <strong>Z</strong> 開始位置設定
+      <strong>X</strong> 終了位置設定
+      <strong>C</strong> リピート区間リセット<br>
+      <strong>V</strong> 開始位置に移動
+      <strong>スペース</strong> 再生/停止
+    </p>
 
     <div id="speedControl">
       <label for="speedRange">再生速度:</label>
@@ -31,12 +34,14 @@
 
     <p id="repeatRangeDisplay">リピート区間: 未設定</p>
     <p id="repeatStatusDisplay">リピート: 常にON</p>
-        <div id="mobileControls" style="display:none; margin-bottom: 10px;">
-            <button id="setStartBtn">開始位置を設定 (Z)</button>
-            <button id="setEndBtn">終了位置を設定 (X)</button>
-            <button id="goStartBtn">開始位置に移動 (V)</button>
-        </div>
-    <button id="resetButton">リピート区間リセット</button>
+
+    <div id="mobileControls" style="display:none; margin-bottom: 10px;">
+      <button id="setStartBtn">開始位置を設定 (Z)</button>
+      <button id="setEndBtn">終了位置を設定 (X)</button>
+      <button id="goStartBtn">開始位置に移動 (V)</button>
+    </div>
+
+    <button id="resetButton">リピート区間リセット (C)</button>
   </div>
 
   <script src="script.js"></script>
