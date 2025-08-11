@@ -1,0 +1,109 @@
+body {
+  font-family: sans-serif;
+  padding: 20px;
+  margin: 0;
+  background: #f9f9f9;
+  color: #333;
+  display: flex;
+  justify-content: center;
+}
+#container {
+  width: 640px;
+  background: white;
+  padding: 20px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.1);
+}
+h1 {
+  font-weight: bold;
+  margin-bottom: 15px;
+  text-align: center;
+}
+input[type="file"] {
+  display: block;
+  margin: 0 auto 15px auto;
+}
+video {
+  width: 100%;
+  max-height: 360px;
+  background: black;
+  border-radius: 6px;
+  display: block;
+  margin-bottom: 15px;
+}
+#progressBarContainer {
+  position: relative;
+  width: 100%;
+  height: 20px;
+  background: #ddd;
+  margin-bottom: 10px;
+  cursor: pointer;
+  user-select: none;
+  border-radius: 5px;
+}
+.marker {
+  position: absolute;
+  top: 0;
+  width: 4px;
+  height: 20px;
+  border-radius: 2px;
+}
+#startMarker { background: green; }
+#endMarker { background: blue; }
+#currentMarker { background: red; }
+#timeDisplay {
+  font-family: monospace;
+  text-align: center;
+  margin-bottom: 15px;
+}
+p {
+  font-size: 14px;
+  line-height: 1.4;
+  margin: 6px 0;
+  text-align: center;
+}
+#repeatRangeDisplay, #repeatStatusDisplay {
+  font-weight: bold;
+  text-align: center;
+  margin: 8px 0;
+}
+button {
+  display: block;
+  margin: 10px auto 20px auto;
+  padding: 8px 20px;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 5px;
+  border: 1px solid #666;
+  background: #eee;
+  transition: background-color 0.2s ease;
+}
+button:hover {
+  background-color: #ddd;
+}
+#speedControl {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+#speedControl label {
+  font-weight: bold;
+  min-width: 70px;
+  text-align: right;
+}
+#speedRange {
+  flex-grow: 1;
+  min-width: 150px;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+#speedValue {
+  width: 50px;
+  text-align: center;
+  font-family: monospace;
+  font-weight: bold;
+}

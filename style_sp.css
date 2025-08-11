@@ -1,0 +1,34 @@
+/* スマホ用 */
+body {
+  padding: 10px;
+}
+#container {
+  width: 100%;
+  padding: 15px;
+  box-shadow: none;
+  border-radius: 0;
+}
+h1 {
+  font-size: 1.5em;
+}
+#speedControl {
+  flex-direction: column !important;
+  gap: 8px !important;
+}
+#speedControl label {
+  text-align: left !important;
+  min-width: auto !important;
+}
+#speedRange {
+  width: 100% !important;
+  margin: 0 !important;
+}
+#speedValue {
+  width: 100% !important;
+  font-size: 1.2em;
+}
+button {
+  width: 100%;
+  font-size: 16px;
+  padding: 10px;
+}
