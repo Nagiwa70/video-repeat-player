@@ -127,6 +127,60 @@ videoPlayer.addEventListener('timeupdate', () => {
 resetButton.addEventListener('click', () => {
   resetRepeat();
 });
+// 動画クリックで再生・一時停止切り替え
+videoPlayer.addEventListener('click', () => {
+  if (videoPlayer.paused) {
+    videoPlayer.play();
+  } else {
+    videoPlayer.pause();
+  }
+});
+
+// スマホ用ボタン取得
+const setStartBtn = document.getElementById('setStartBtn');
+const setEndBtn = document.getElementById('setEndBtn');
+const goStartBtn = document.getElementById('goStartBtn');
+
+setStartBtn.addEventListener('click', () => {
+  repeatStart = videoPlayer.currentTime;
+  if (repeatEnd !== null && repeatEnd <= repeatStart) {
+    repeatEnd = null;
+  }
+  updateMarkers();
+  updateRepeatRangeDisplay();
+});
+
+setEndBtn.addEventListener('click', () => {
+  if (repeatStart === null) {
+    alert('先に開始位置を設定してください');
+    return;
+  }
+  if (videoPlayer.currentTime <= repeatStart) {
+    alert('終了位置は開始位置より後にしてください');
+    return;
+  }
+  repeatEnd = videoPlayer.currentTime;
+  updateMarkers();
+  updateRepeatRangeDisplay();
+});
+
+goStartBtn.addEventListener('click', () => {
+  if (repeatStart !== null) {
+    videoPlayer.currentTime = repeatStart;
+    videoPlayer.play();
+  }
+});
+
+// リピート区間表示更新（既存の箇所と重複しないように共通化）
+function updateRepeatRangeDisplay() {
+  if (repeatStart === null && repeatEnd === null) {
+    repeatRangeDisplay.textContent = 'リピート区間: 未設定';
+  } else if (repeatStart !== null && repeatEnd === null) {
+    repeatRangeDisplay.textContent = `リピート区間: 開始 ${repeatStart.toFixed(2)}秒 - 未設定`;
+  } else {
+    repeatRangeDisplay.textContent = `リピート区間: 開始 ${repeatStart.toFixed(2)}秒 - 終了 ${repeatEnd.toFixed(2)}秒`;
+  }
+}
 
 // 再生速度スライダーと数値連動
 speedRange.addEventListener('input', () => {

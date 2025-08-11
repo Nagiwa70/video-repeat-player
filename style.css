@@ -107,3 +107,18 @@ button:hover {
   font-family: monospace;
   font-weight: bold;
 }
+@media (max-width: 768px) {
+  #mobileControls {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  #mobileControls button {
+    font-size: 14px;
+    padding: 8px 6px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+}
