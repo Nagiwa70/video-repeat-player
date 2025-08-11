@@ -1,124 +1,205 @@
 body {
-  font-family: sans-serif;
+  background: #1f2428; /* GitHub紺色より少し暗め */
+  color: #c9d1d9; /* GitHubのテキスト色っぽい淡いグレー */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   padding: 20px;
-  margin: 0;
-  background: #f9f9f9;
-  color: #333;
-  display: flex;
-  justify-content: center;
+  max-width: 700px;
+  margin: auto;
 }
-#container {
-  width: 640px;
-  background: white;
-  padding: 20px;
-  box-sizing: border-box;
-  border-radius: 8px;
-  box-shadow: 0 0 8px rgba(0,0,0,0.1);
-}
+
 h1 {
-  font-weight: bold;
-  margin-bottom: 15px;
+  color: #58a6ff; /* GitHubリンク色に近い明るい青 */
   text-align: center;
+  margin-bottom: 20px;
 }
-input[type="file"] {
+
+#videoPlayer {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(10,10,10,0.8);
+  width: 100%;
+  max-width: 640px;
   display: block;
   margin: 0 auto 15px auto;
+  background: #000;
 }
-video {
-  width: 100%;
-  max-height: 360px;
-  background: black;
-  border-radius: 6px;
-  display: block;
-  margin-bottom: 15px;
-}
+
 #progressBarContainer {
   position: relative;
   width: 100%;
-  height: 20px;
-  background: #ddd;
-  margin-bottom: 10px;
+  max-width: 640px;
+  height: 22px;
+  background: #2d333b; /* GitHubのサイドバー背景に近い */
+  margin: 10px auto;
+  border-radius: 11px;
   cursor: pointer;
   user-select: none;
-  border-radius: 5px;
+  box-shadow: inset 0 2px 6px rgba(255,255,255,0.1);
+  transition: background-color 0.3s ease;
 }
+
+#progressBarContainer:hover {
+  background: #444c56; /* 少し明るめの紺グレー */
+}
+
 .marker {
   position: absolute;
   top: 0;
-  width: 4px;
-  height: 20px;
-  border-radius: 2px;
+  width: 6px;
+  height: 22px;
+  border-radius: 3px;
+  box-shadow: 0 0 6px rgba(255,255,255,0.3);
 }
-#startMarker { background: green; }
-#endMarker { background: blue; }
-#currentMarker { background: red; }
+
+#startMarker { background: #54adff; }
+#endMarker { background: #79b8ff; }
+#currentMarker { background: #f85149; }
+
 #timeDisplay {
-  font-family: monospace;
+  margin-top: 8px;
+  font-family: 'Courier New', Courier, monospace;
+  font-weight: 600;
   text-align: center;
-  margin-bottom: 15px;
+  color: #8b949e; /* GitHubの副テキスト色 */
 }
-p {
-  font-size: 14px;
-  line-height: 1.4;
-  margin: 6px 0;
-  text-align: center;
-}
-#repeatRangeDisplay, #repeatStatusDisplay {
-  font-weight: bold;
-  text-align: center;
-  margin: 8px 0;
-}
+
 button {
-  display: block;
-  margin: 10px auto 20px auto;
-  padding: 8px 20px;
-  font-size: 14px;
+  background-color: #238636; /* GitHubの成功色 */
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin: 5px 3px;
   cursor: pointer;
-  border-radius: 5px;
-  border: 1px solid #666;
-  background: #eee;
-  transition: background-color 0.2s ease;
+  font-weight: 600;
+  transition: background-color 0.25s ease;
+  user-select: none;
+  font-size: 15px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
 }
-button:hover {
-  background-color: #ddd;
+
+button:hover, button:focus {
+  background-color: #2ea043; /* GitHubの成功色のホバー */
+  outline: none;
 }
-#speedControl {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 20px;
-  gap: 10px;
-  flex-wrap: nowrap;
+
+#mobileControls button {
+  font-size: 14px;
+  padding: 8px 10px;
+  width: 100%;
+  box-sizing: border-box;
 }
-#speedControl label {
-  font-weight: bold;
-  min-width: 70px;
-  text-align: right;
-}
-#speedRange {
-  flex-grow: 1;
-  min-width: 150px;
-  margin-left: 10px;
-  margin-right: 10px;
-}
-#speedValue {
-  width: 50px;
-  text-align: center;
-  font-family: monospace;
-  font-weight: bold;
-}
+
 @media (max-width: 768px) {
   #mobileControls {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
     margin-bottom: 10px;
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
   }
+}
+:root {
+  --bg-color: #1f2428;
+  --text-color: #c9d1d9;
+  --header-color: #58a6ff;
+  --progress-bg: #2d333b;
+  --progress-hover-bg: #444c56;
+  --marker-start: #54adff;
+  --marker-end: #79b8ff;
+  --marker-current: #f85149;
+  --time-color: #8b949e;
+  --button-bg: #238636;
+  --button-hover-bg: #2ea043;
+}
 
-  #mobileControls button {
-    font-size: 14px;
-    padding: 8px 6px;
-    width: 100%;
-    box-sizing: border-box;
+[data-theme="light"] {
+  --bg-color: #f9f9f9;
+  --text-color: #24292e;
+  --header-color: #0969da;
+  --progress-bg: #ddd;
+  --progress-hover-bg: #bbb;
+  --marker-start: #007bff;
+  --marker-end: #3399ff;
+  --marker-current: #ff4d4d;
+  --time-color: #555;
+  --button-bg: #0969da;
+  --button-hover-bg: #0b63e5;
+}
+
+body {
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  padding: 20px;
+  max-width: 700px;
+  margin: auto;
+}
+
+h1 {
+  color: var(--header-color);
+  text-align: center;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+#progressBarContainer {
+  background: var(--progress-bg);
+}
+#progressBarContainer:hover {
+  background: var(--progress-hover-bg);
+}
+
+#startMarker { background: var(--marker-start); }
+#endMarker { background: var(--marker-end); }
+#currentMarker { background: var(--marker-current); }
+
+#timeDisplay {
+  color: var(--time-color);
+}
+
+button {
+  background-color: var(--button-bg);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  margin: 5px 3px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.25s ease;
+  user-select: none;
+  font-size: 15px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+button:hover, button:focus {
+  background-color: var(--button-hover-bg);
+  outline: none;
+}
+/* スマホなど画面幅600px以下でボタンを小さく */
+@media (max-width: 600px) {
+  h1 {
+    font-size: 1.4rem;
+  }
+  #themeToggleBtn {
+    font-size: 16px !important;
+    padding: 2px 6px !important;
+    margin-left: 8px !important;
+  }
+}
+@media (max-width: 600px) {
+  #themeToggleBtn {
+    font-size: 14px !important;
+    padding: 2px 6px !important;
+    margin-left: 6px !important;
+    width: 32px !important;
+    height: 32px !important;
+    line-height: 28px !important;
+    border-radius: 6px !important;
   }
 }

@@ -247,3 +247,20 @@ function formatTime(sec) {
   const s = Math.floor(sec % 60).toString().padStart(2, '0');
   return `${m}:${s}`;
 }
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+
+function setTheme(theme) {
+  document.body.setAttribute('data-theme', theme);
+  localStorage.setItem('theme', theme);
+  themeToggleBtn.textContent = theme === 'dark' ? '🌙' : '☀️';
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  setTheme(savedTheme);
+});
+
+themeToggleBtn.addEventListener('click', () => {
+  const current = document.body.getAttribute('data-theme');
+  setTheme(current === 'dark' ? 'light' : 'dark');
+});
