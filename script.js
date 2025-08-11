@@ -226,3 +226,12 @@ videoPlayer.addEventListener('click', () => {
   if (videoPlayer.paused) videoPlayer.play();
   else videoPlayer.pause();
 });
+progressBarContainer.addEventListener('touchend', (e) => {
+  if (!videoPlayer.duration) return;
+  const touch = e.changedTouches[0];
+  const rect = progressBarContainer.getBoundingClientRect();
+  const clickRatio = (touch.clientX - rect.left) / rect.width;
+  const clickedTime = videoPlayer.duration * clickRatio;
+  videoPlayer.currentTime = clickedTime;
+  e.preventDefault();
+});
