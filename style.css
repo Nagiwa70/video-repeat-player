@@ -140,7 +140,7 @@ h1 {
   display: none;
   z-index: 10;
   overflow: hidden;
-  cursor: pointer; /* PC用にカーソルをポインターに */
+  cursor: pointer;
 }
 
 #videoPlayer {
@@ -182,23 +182,21 @@ h1 {
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
 }
 
-/* --- ここからが修正箇所 --- */
-/* モバイル用のスタイル */
 .is-mobile #playPauseIcon {
   background-color: rgba(0, 0, 0, 0.5);
   border-radius: 50%;
   padding: 10px;
-  box-sizing: content-box; /* paddingがサイズに含まれないように */
+  box-sizing: content-box;
   width: 50px;
   height: 50px;
   cursor: pointer;
   pointer-events: auto;
   transition: transform 0.2s;
 }
+
 .is-mobile #playPauseIcon:hover {
   transform: scale(1.1);
 }
-/* --- ここまでが修正箇所 --- */
 
 #playPauseIcon.play {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M8 5v14l11-7z'/%3E%3C/svg%3E");

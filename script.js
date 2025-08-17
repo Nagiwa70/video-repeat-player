@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function toggleFullscreen() {
     if (!document.fullscreenElement) {
-      const requestMethod = videoContainer.requestFullscreen || videoContainer.mozRequestFullScreen || videoContainer.webkitRequestFullScreen || videoContainer.msRequestFullscreen;
+      const requestMethod = videoContainer.requestFullscreen || videoContainer.mozRequestFullScreen || videoContainer.webkitRequestFullScreen || videoContainer.msRequestFullScreen;
       if (requestMethod) {
         requestMethod.call(videoContainer);
       }
@@ -149,7 +149,6 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateMarkers() {
     const duration = videoPlayer.duration;
     if (!duration) return;
-
     startMarker.style.display = repeatStart !== null ? 'block' : 'none';
     if (repeatStart !== null) {
       startMarker.style.left = (repeatStart / duration * 100) + '%';
@@ -158,7 +157,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (repeatEnd !== null) {
       endMarker.style.left = (repeatEnd / duration * 100) + '%';
     }
-
     if (repeatStart !== null && repeatEnd !== null) {
       const startPercent = (repeatStart / duration) * 100;
       const endPercent = (repeatEnd / duration) * 100;
@@ -302,34 +300,39 @@ document.addEventListener('DOMContentLoaded', () => {
   videoPlayer.addEventListener('play', updateCentralPlayPauseIcon);
   videoPlayer.addEventListener('pause', updateCentralPlayPauseIcon);
   
-  videoOverlay.addEventListener('click', (e) => {
-      // このイベントは mobile-controls-visible がついている時のみ発火する
-      // 中央のアイコン以外がクリックされたらUIを隠す
-      if (e.target === videoOverlay) {
-          hideMobileControls();
-      }
-  });
-
-  playPauseIcon.addEventListener('click', (e) => {
-      e.stopPropagation(); // 親(overlay)へのイベント伝播を止める
-      togglePlayPause();
-      if(isMobile) {
-          hideMobileControls();
-      }
-  });
-
+  // --- ここからが修正箇所 ---
+  
   videoContainer.addEventListener('click', (e) => {
-      // このイベントは主にPC用、またはモバイルでの初回タップ用
-      if (isMobile) {
-          if (!videoContainer.classList.contains('mobile-controls-visible')) {
-              showMobileControls();
-          }
-      } else {
-          // PCではvideoContainerのクリックで再生/停止
+    // どのUI要素の上でクリックされたかをチェックする
+    const clickedOnUI = 
+        e.target === progressBarContainer || progressBarContainer.contains(e.target) ||
+        e.target === fullscreenBtn || fullscreenBtn.contains(e.target);
+
+    if (isMobile) {
+      // --- スマホの操作 ---
+      if (videoContainer.classList.contains('mobile-controls-visible')) {
+        // UI表示中のタップ
+        if (e.target === playPauseIcon) {
           togglePlayPause();
-          flashPlayPauseIcon();
+          hideMobileControls();
+        } else if (!clickedOnUI) {
+          hideMobileControls();
+        }
+      } else {
+        // UI非表示中のタップ -> UIを表示
+        showMobileControls();
       }
+    } else {
+      // --- PCの操作 ---
+      // UI要素(プログレスバーや全画面ボタン)以外をクリックした場合のみ再生/停止
+      if (!clickedOnUI) {
+        togglePlayPause();
+        flashPlayPauseIcon();
+      }
+    }
   });
+
+  // --- ここまでが修正箇所 ---
   
   setStartBtn.addEventListener('click', setStartTime);
   setEndBtn.addEventListener('click', setEndTime);
@@ -339,7 +342,11 @@ document.addEventListener('DOMContentLoaded', () => {
   speedRange.addEventListener('input', (e) => setPlaybackSpeed(parseFloat(e.target.value)));
   speedValue.addEventListener('change', (e) => setPlaybackSpeed(parseFloat(e.target.value)));
   
-  fullscreenBtn.addEventListener('click', toggleFullscreen);
+  fullscreenBtn.addEventListener('click', (e) => {
+      e.stopPropagation(); // videoContainerへのクリックイベントの伝播を停止
+      toggleFullscreen();
+  });
+
   ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(event =>
     document.addEventListener(event, updateFullscreenIcon)
   );
