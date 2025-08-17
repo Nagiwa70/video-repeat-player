@@ -39,6 +39,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const FULLSCREEN_ICON = '<svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"></path></svg>';
   const EXIT_FULLSCREEN_ICON = '<svg viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"></path></svg>';
 
+  // --- 初期化処理 ---
+  if (isMobile) {
+    videoContainer.classList.add('is-mobile');
+  }
+
   // --- 関数定義 ---
 
   function createMarker(id) {
@@ -197,21 +202,16 @@ document.addEventListener('DOMContentLoaded', () => {
     updateRepeatDisplay();
   }
   
-  // --- ここからが修正箇所 (1/3) ---
-
-  // PCでのクリックやキー操作時のフィードバック用アイコン表示
   function flashPlayPauseIcon() {
     updateCentralPlayPauseIcon();
-    videoOverlay.classList.add('feedback');
-    setTimeout(() => videoOverlay.classList.remove('feedback'), 500);
+    videoOverlay.classList.add('feedback-flash');
+    setTimeout(() => videoOverlay.classList.remove('feedback-flash'), 500);
   }
 
-  // 中央アイコンの状態を更新する
   function updateCentralPlayPauseIcon() {
      playPauseIcon.className = videoPlayer.paused ? 'play' : 'pause';
   }
   
-  // モバイル用コントロールの表示/非表示関数
   function hideMobileControls() {
     videoContainer.classList.remove('mobile-controls-visible');
     clearTimeout(controlsTimer);
@@ -223,8 +223,6 @@ document.addEventListener('DOMContentLoaded', () => {
     clearTimeout(controlsTimer);
     controlsTimer = setTimeout(hideMobileControls, 3000);
   }
-
-  // --- ここまでが修正箇所 (1/3) ---
 
   const handleDragMove = (e) => {
     if (!isDragging || !videoPlayer.duration) return;
@@ -301,39 +299,37 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   
   videoPlayer.addEventListener('loadedmetadata', updateTimeDisplay);
-  
-  // --- ここからが修正箇所 (2/3) ---
   videoPlayer.addEventListener('play', updateCentralPlayPauseIcon);
   videoPlayer.addEventListener('pause', updateCentralPlayPauseIcon);
   
-  // 動画コンテナ全体(オーバーレイ含む)のクリックイベント
-  videoContainer.addEventListener('click', (e) => {
-    // クリックされたのが中央の再生/停止アイコンでないことを確認
-    if (e.target !== playPauseIcon && !playPauseIcon.contains(e.target)) {
-       if (isMobile) {
-        if (videoContainer.classList.contains('mobile-controls-visible')) {
+  videoOverlay.addEventListener('click', (e) => {
+      // このイベントは mobile-controls-visible がついている時のみ発火する
+      // 中央のアイコン以外がクリックされたらUIを隠す
+      if (e.target === videoOverlay) {
           hideMobileControls();
-        } else {
-          showMobileControls();
-        }
-      } else {
-        // PCの場合はコンテナクリックで再生/停止
-        togglePlayPause();
-        flashPlayPauseIcon();
       }
-    }
   });
 
-  // 中央の再生/停止アイコンのクリックイベント
   playPauseIcon.addEventListener('click', (e) => {
-    e.stopPropagation(); // 親要素(videoContainer)へのイベント伝播を停止
-    togglePlayPause();
-    if(isMobile) {
-      hideMobileControls();
-    }
+      e.stopPropagation(); // 親(overlay)へのイベント伝播を止める
+      togglePlayPause();
+      if(isMobile) {
+          hideMobileControls();
+      }
   });
 
-  // --- ここまでが修正箇所 (2/3) ---
+  videoContainer.addEventListener('click', (e) => {
+      // このイベントは主にPC用、またはモバイルでの初回タップ用
+      if (isMobile) {
+          if (!videoContainer.classList.contains('mobile-controls-visible')) {
+              showMobileControls();
+          }
+      } else {
+          // PCではvideoContainerのクリックで再生/停止
+          togglePlayPause();
+          flashPlayPauseIcon();
+      }
+  });
   
   setStartBtn.addEventListener('click', setStartTime);
   setEndBtn.addEventListener('click', setEndTime);
@@ -361,14 +357,10 @@ document.addEventListener('DOMContentLoaded', () => {
       case 'x': setEndTime(); break;
       case 'c': resetRepeat(); break;
       case 'v': goToStart(); break;
-      
-      // --- ここからが修正箇所 (3/3) ---
       case ' ': 
         togglePlayPause();
-        flashPlayPauseIcon(); // スペースキーでもフィードバックを表示
+        flashPlayPauseIcon();
         break;
-      // --- ここまでが修正箇所 (3/3) ---
-
       case 'arrowright': setPlaybackSpeed(videoPlayer.playbackRate + 0.1, true); break;
       case 'arrowleft': setPlaybackSpeed(videoPlayer.playbackRate - 0.1, true); break;
       case 'arrowup': setPlaybackSpeed(videoPlayer.playbackRate + 0.01, true); break;
