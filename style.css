@@ -1,244 +1,470 @@
-body {
-  background: #1f2428; /* GitHub紺色より少し暗め */
-  color: #c9d1d9; /* GitHubのテキスト色っぽい淡いグレー */
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  padding: 20px;
-  max-width: 700px;
-  margin: auto;
-}
-
-h1 {
-  color: #58a6ff; /* GitHubリンク色に近い明るい青 */
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-#videoPlayer {
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(10,10,10,0.8);
-  width: 100%;
-  max-width: 640px;
-  display: block;
-  margin: 0 auto 15px auto;
-  background: #000;
-}
-
-#progressBarContainer {
-  position: relative;
-  width: 100%;
-  max-width: 640px;
-  height: 22px;
-  background: #2d333b; /* GitHubのサイドバー背景に近い */
-  margin: 10px auto;
-  border-radius: 11px;
-  cursor: pointer;
-  user-select: none;
-  box-shadow: inset 0 2px 6px rgba(255,255,255,0.1);
-  transition: background-color 0.3s ease;
-}
-
-#progressBarContainer:hover {
-  background: #444c56; /* 少し明るめの紺グレー */
-}
-
-.marker {
-  position: absolute;
-  top: 0;
-  width: 6px;
-  height: 22px;
-  border-radius: 3px;
-  box-shadow: 0 0 6px rgba(255,255,255,0.3);
-}
-
-#startMarker { background: #54adff; }
-#endMarker { background: #79b8ff; }
-#currentMarker { background: #f85149; }
-
-#timeDisplay {
-  margin-top: 8px;
-  font-family: 'Courier New', Courier, monospace;
-  font-weight: 600;
-  text-align: center;
-  color: #8b949e; /* GitHubの副テキスト色 */
-}
-
-button {
-  background-color: #238636; /* GitHubの成功色 */
-  color: white;
-  border: none;
-  border-radius: 10px;
-  padding: 10px 16px;
-  margin: 5px 3px;
-  cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.25s ease;
-  user-select: none;
-  font-size: 15px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-}
-
-button:hover, button:focus {
-  background-color: #2ea043; /* GitHubの成功色のホバー */
-  outline: none;
-}
-
-#mobileControls button {
-  font-size: 14px;
-  padding: 8px 10px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-@media (max-width: 768px) {
-  #mobileControls {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    margin-bottom: 10px;
-    max-width: 320px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-}
 :root {
   --bg-color: #1f2428;
   --text-color: #c9d1d9;
   --header-color: #58a6ff;
-  --progress-bg: #2d333b;
-  --progress-hover-bg: #444c56;
-  --marker-start: #54adff;
-  --marker-end: #79b8ff;
-  --marker-current: #f85149;
+  --container-bg: #161b22;
+  --border-color: #30363d;
+  --progress-bg: #444c56;
+  --progress-hover-bg: #586069;
+  --progress-played-bg: #39b54a;
+  --repeat-range-bg: rgba(88, 166, 255, 0.7);
+  --repeat-range-border: #58a6ff;
+  --marker-start: #39b54a;
+  --marker-end: #58a6ff;
+  --marker-current: #ffffff;
   --time-color: #8b949e;
   --button-bg: #238636;
   --button-hover-bg: #2ea043;
+  --button-reset-bg: #8b949e;
+  --button-reset-hover-bg: #a0a8b1;
+  --toast-bg: rgba(0, 0, 0, 0.8);
+  --toast-text: #fff;
+  --controls-bg: linear-gradient(to top, rgba(0,0,0,0.7), transparent);
+  --icon-color: #ffffff;
 }
 
-[data-theme="light"] {
-  --bg-color: #f9f9f9;
+body.light-theme {
+  --bg-color: #f0f2f5;
   --text-color: #24292e;
   --header-color: #0969da;
-  --progress-bg: #ddd;
-  --progress-hover-bg: #bbb;
-  --marker-start: #007bff;
-  --marker-end: #3399ff;
-  --marker-current: #ff4d4d;
-  --time-color: #555;
+  --container-bg: #ffffff;
+  --border-color: #d0d7de;
+  --progress-bg: #e1e4e8;
+  --progress-hover-bg: #c8cdd2;
+  --progress-played-bg: #0969da;
+  --repeat-range-bg: rgba(9, 105, 218, 0.6);
+  --repeat-range-border: #0969da;
+  --marker-start: #1f883d;
+  --marker-end: #0969da;
+  --marker-current: #24292e;
+  --time-color: #57606a;
   --button-bg: #0969da;
-  --button-hover-bg: #0b63e5;
+  --button-hover-bg: #0c82f9;
+  --button-reset-bg: #6e7781;
+  --button-reset-hover-bg: #808890;
+  --toast-bg: rgba(255, 255, 255, 0.9);
+  --toast-text: #000;
+  --controls-bg: linear-gradient(to top, rgba(255,255,255,0.7), transparent);
+  --icon-color: #24292e;
 }
 
 body {
   background: var(--bg-color);
   color: var(--text-color);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+  margin: 0;
+  padding: 15px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+}
+
+body.is-scrubbing {
+  cursor: grabbing;
+  user-select: none;
+}
+
+#container {
+  background: var(--container-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
   padding: 20px;
+  width: 100%;
   max-width: 700px;
-  margin: auto;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  box-sizing: border-box;
 }
 
 h1 {
   color: var(--header-color);
   text-align: center;
+  margin-top: 0;
   margin-bottom: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 15px;
+  font-size: 1.8em;
+}
+
+#themeToggleBtn {
+  background: none;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 18px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+#themeToggleBtn:hover {
+  background-color: var(--progress-bg);
+}
+
+#videoUploadContainer {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+#videoInput {
+  display: none;
+}
+
+.custom-file-upload {
+  background-color: var(--button-bg);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-block;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.custom-file-upload:hover {
+  background-color: var(--button-hover-bg);
+}
+
+#fileNameDisplay {
+  margin-top: 10px;
+  color: var(--time-color);
+  min-height: 1.2em;
+}
+
+#videoContainer {
+  position: relative;
+  background: #000;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  display: none;
+  z-index: 10;
+  overflow: hidden;
+}
+
+#videoPlayer {
+  width: 100%;
+  display: block;
+  border-radius: 12px;
+}
+
+#videoOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+#videoOverlay.show {
+  opacity: 1;
+}
+
+#playPauseIcon {
+  width: 60px;
+  height: 60px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+#playPauseIcon.play {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M8 5v14l11-7z'/%3E%3C/svg%3E");
+}
+
+#playPauseIcon.pause {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M6 19h4V5H6v14zm8-14v14h4V5h-4z'/%3E%3C/svg%3E");
+}
+
+#videoControls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 5px 10px 10px;
+  background: var(--controls-bg);
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+  pointer-events: none;
+}
+
+#videoContainer:hover #videoControls,
+#videoContainer.mobile-controls-visible #videoControls {
+  opacity: 1;
+}
+
+#videoControls > * {
+  pointer-events: auto;
 }
 
 #progressBarContainer {
+  position: relative;
+  width: 100%;
+  height: 8px;
   background: var(--progress-bg);
-}
-#progressBarContainer:hover {
-  background: var(--progress-hover-bg);
+  margin: 0 auto 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  transition: height 0.2s;
 }
 
-#startMarker { background: var(--marker-start); }
-#endMarker { background: var(--marker-end); }
-#currentMarker { background: var(--marker-current); }
+#progressBarContainer:hover {
+  height: 12px;
+}
+
+#progressBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 100%;
+  background: var(--progress-played-bg);
+  border-radius: 4px;
+  transition: width 0.1s linear;
+  z-index: 2;
+  position: relative;
+}
+
+#repeatRangeBar {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: var(--repeat-range-bg);
+  z-index: 1;
+  display: none;
+  pointer-events: none;
+  border-left: 1px solid var(--repeat-range-border);
+  border-right: 1px solid var(--repeat-range-border);
+  box-sizing: border-box;
+}
+
+#progressTimeTooltip {
+  position: absolute;
+  bottom: 20px;
+  background-color: rgba(0,0,0,0.7);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: 'SF Mono', 'Courier New', monospace;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+#progressBarContainer:hover #progressTimeTooltip {
+  opacity: 1;
+}
+
+.marker {
+  position: absolute;
+  top: -4px;
+  width: 8px;
+  height: 16px;
+  border-radius: 4px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.5);
+  transform: translateX(-50%);
+  z-index: 10;
+  transition: height 0.2s, top 0.2s;
+}
+
+#progressBarContainer:hover .marker {
+  top: -2px;
+  height: 16px;
+}
+
+#startMarker {
+  z-index: 11;
+}
+
+#endMarker {
+  z-index: 11;
+}
+
+#currentMarker {
+  background: var(--marker-current);
+  width: 4px;
+  height: 16px;
+  border-radius: 2px;
+  z-index: 15;
+}
+
+.controls-bottom-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
 #timeDisplay {
+  font-family: 'SF Mono', 'Courier New', Courier, monospace;
+  font-weight: 600;
+  color: var(--icon-color);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  margin: 0;
+}
+
+#fullscreenBtn {
+  background: none;
+  border: none;
+  padding: 5px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+#fullscreenBtn:hover {
+  opacity: 1;
+}
+
+#fullscreenBtn svg {
+  width: 24px;
+  height: 24px;
+  fill: var(--icon-color);
+  display: block;
+}
+
+.controls-group, #speedControl {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.shortcuts-info {
+  font-size: 0.9em;
   color: var(--time-color);
+}
+
+#speedControl {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+#speedRange {
+  flex-grow: 1;
+  max-width: 250px;
+}
+
+#speedValue {
+  width: 60px;
+  background-color: var(--progress-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 5px;
+  text-align: center;
+}
+
+#repeatRangeDisplay {
+  text-align: center;
+  font-weight: 500;
+  margin-bottom: 20px;
+  min-height: 1.2em;
+}
+
+#actionButtons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  max-width: 400px;
+  margin: 0 auto;
 }
 
 button {
   background-color: var(--button-bg);
   color: white;
   border: none;
-  border-radius: 10px;
-  padding: 10px 16px;
-  margin: 5px 3px;
+  border-radius: 8px;
+  padding: 12px;
   cursor: pointer;
   font-weight: 600;
-  transition: background-color 0.25s ease;
+  transition: background-color 0.2s, transform 0.1s;
   user-select: none;
   font-size: 15px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
 }
 
-button:hover, button:focus {
+button:hover {
   background-color: var(--button-hover-bg);
-  outline: none;
 }
-/* スマホなど画面幅600px以下でボタンを小さく */
-@media (max-width: 600px) {
-  h1 {
-    font-size: 1.4rem;
-  }
-  #themeToggleBtn {
-    font-size: 16px !important;
-    padding: 2px 6px !important;
-    margin-left: 8px !important;
-  }
+
+button:active {
+  transform: scale(0.97);
 }
-@media (max-width: 600px) {
-  #themeToggleBtn {
-    font-size: 14px !important;
-    padding: 2px 6px !important;
-    margin-left: 6px !important;
-    width: 32px !important;
-    height: 32px !important;
-    line-height: 28px !important;
-    border-radius: 6px !important;
-  }
+
+.reset-btn {
+  background-color: var(--button-reset-bg);
 }
+
+.reset-btn:hover {
+  background-color: var(--button-reset-hover-bg);
+}
+
+#toastContainer {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast {
+  background-color: var(--toast-bg);
+  color: var(--toast-text);
+  padding: 10px 20px;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  font-size: 14px;
+  animation: toast-fade 3s ease-in-out forwards;
+  pointer-events: auto;
+}
+
+@keyframes toast-fade {
+  0% { opacity: 0; transform: translateY(20px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+
 @media (max-width: 600px) {
   body {
-    padding-left: 10px !important;
-    padding-right: 10px !important;
-    max-width: 100% !important;
+    padding: 10px;
+  }
+  
+  #container {
+    padding: 15px;
   }
 
-  /* もしさらにセンター寄せしたいなら、親コンテナをflexに */
-  body > * {
-    margin-left: auto !important;
-    margin-right: auto !important;
+  h1 {
+    font-size: 1.5em;
   }
-}
-/* デフォルトはダーク系 */
-body {
-  background-color: #1f2428;
-  color: #ddd;
-}
-/* ライトテーマ */
-body.light-theme {
-  background-color: #f0f0f0;
-  color: #222;
-}
-/* 必要なら他の要素の色も調整 */
-/* PC用（画面幅769px以上）で2×2グリッドに */
-@media (min-width: 769px) {
-  #mobileControls {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    max-width: 320px;
-    margin-left: auto;
-    margin-right: auto;
-    margin-bottom: 10px;
+  
+  #speedControl {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
   }
-  #mobileControls button {
-    width: 100%; /* 各ボタンを均等幅に */
+  #speedControl label {
+    text-align: left;
+  }
+  #speedRange {
+    max-width: none;
+  }
+
+  #actionButtons button {
+    font-size: 14px;
   }
 }

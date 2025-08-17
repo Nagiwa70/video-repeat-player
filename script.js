@@ -1,237 +1,348 @@
-const videoInput = document.getElementById('videoInput');
-const videoPlayer = document.getElementById('videoPlayer');
-const progressBarContainer = document.getElementById('progressBarContainer');
-const repeatRangeDisplay = document.getElementById('repeatRangeDisplay');
-const repeatStatusDisplay = document.getElementById('repeatStatusDisplay');
-const timeDisplay = document.getElementById('timeDisplay');
-const resetButton = document.getElementById('resetButton');
-const speedRange = document.getElementById('speedRange');
-const speedValue = document.getElementById('speedValue');
-const themeToggleBtn = document.getElementById('themeToggleBtn');
+document.addEventListener('DOMContentLoaded', () => {
+  // --- 要素の取得 ---
+  const videoInput = document.getElementById('videoInput');
+  const videoPlayer = document.getElementById('videoPlayer');
+  const videoContainer = document.getElementById('videoContainer');
+  const videoUploadContainer = document.getElementById('videoUploadContainer');
+  const fileNameDisplay = document.getElementById('fileNameDisplay');
+  const progressBarContainer = document.getElementById('progressBarContainer');
+  const repeatRangeDisplay = document.getElementById('repeatRangeDisplay');
+  const timeDisplay = document.getElementById('timeDisplay');
+  const themeToggleBtn = document.getElementById('themeToggleBtn');
+  const speedRange = document.getElementById('speedRange');
+  const speedValue = document.getElementById('speedValue');
+  const videoOverlay = document.getElementById('videoOverlay');
+  const playPauseIcon = document.getElementById('playPauseIcon');
+  const setStartBtn = document.getElementById('setStartBtn');
+  const setEndBtn = document.getElementById('setEndBtn');
+  const goStartBtn = document.getElementById('goStartBtn');
+  const resetButton = document.getElementById('resetButton');
+  const fullscreenBtn = document.getElementById('fullscreenBtn');
+  const progressBar = document.getElementById('progressBar');
+  const progressTimeTooltip = document.getElementById('progressTimeTooltip');
+  const repeatRangeBar = document.getElementById('repeatRangeBar');
 
-const setStartBtn = document.getElementById('setStartBtn');
-const setEndBtn = document.getElementById('setEndBtn');
-const goStartBtn = document.getElementById('goStartBtn');
-const mobileControls = document.getElementById('mobileControls');
+  // --- 状態変数 ---
+  let repeatStart = null;
+  let repeatEnd = null;
+  const isRepeating = true;
+  let isDragging = false;
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  let controlsTimer = null;
 
-let repeatStart = null;
-let repeatEnd = null;
-let isRepeating = true; // 常にONなのでtrue固定
+  // --- マーカー作成 ---
+  const startMarker = createMarker('startMarker');
+  const endMarker = createMarker('endMarker');
+  const currentMarker = createMarker('currentMarker');
+  
+  // --- 全画面切り替え用のSVGアイコン ---
+  const FULLSCREEN_ICON = '<svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"></path></svg>';
+  const EXIT_FULLSCREEN_ICON = '<svg viewBox="0 0 24 24"><path d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"></path></svg>';
 
-// マーカー作成
-const startMarker = createMarker('startMarker', '#39b54a');
-const endMarker = createMarker('endMarker', '#2196f3');
-const currentMarker = createMarker('currentMarker', '#e74c3c');
+  // --- 関数定義 ---
 
-function createMarker(id, color) {
-  const marker = document.createElement('div');
-  marker.id = id;
-  marker.classList.add('marker');
-  marker.style.background = color;
-  progressBarContainer.appendChild(marker);
-  return marker;
-}
-
-// 動画ファイル読み込み
-videoInput.addEventListener('change', () => {
-  const file = videoInput.files[0];
-  if (file) {
-    const url = URL.createObjectURL(file);
-    videoPlayer.src = url;
-    videoPlayer.play();
-    resetRepeat();
+  function createMarker(id) {
+    const marker = document.createElement('div');
+    marker.id = id;
+    marker.classList.add('marker');
+    progressBarContainer.appendChild(marker);
+    return marker;
   }
-});
-
-// 再生バーのクリックで再生位置移動
-progressBarContainer.addEventListener('click', (e) => {
-  if (!videoPlayer.duration) return;
-  const rect = progressBarContainer.getBoundingClientRect();
-  const clickRatio = (e.clientX - rect.left) / rect.width;
-  const clickedTime = videoPlayer.duration * clickRatio;
-  videoPlayer.currentTime = clickedTime;
-});
-
-// マーカー更新
-function updateMarkers() {
-  if (repeatStart !== null && videoPlayer.duration) {
-    startMarker.style.left = (repeatStart / videoPlayer.duration * 100) + '%';
-    startMarker.style.display = 'block';
-  } else {
-    startMarker.style.display = 'none';
-  }
-  if (repeatEnd !== null && videoPlayer.duration) {
-    endMarker.style.left = (repeatEnd / videoPlayer.duration * 100) + '%';
-    endMarker.style.display = 'block';
-  } else {
-    endMarker.style.display = 'none';
-  }
-}
-
-// 現在位置マーカー更新
-function updateCurrentMarker() {
-  if (!videoPlayer.duration) {
-    currentMarker.style.display = 'none';
-    return;
-  }
-  const percent = videoPlayer.currentTime / videoPlayer.duration * 100;
-  currentMarker.style.left = percent + '%';
-  currentMarker.style.display = 'block';
-}
-
-// 時刻表示更新
-function updateTimeDisplay() {
-  function formatTime(t) {
-    const m = Math.floor(t / 60);
-    const s = Math.floor(t % 60);
-    return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-  }
-  const current = formatTime(videoPlayer.currentTime);
-  const duration = videoPlayer.duration ? formatTime(videoPlayer.duration) : '00:00';
-  timeDisplay.textContent = `${current} / ${duration}`;
-}
-
-// 動画再生時間の更新時処理
-videoPlayer.addEventListener('timeupdate', () => {
-  updateCurrentMarker();
-  updateTimeDisplay();
-  if (isRepeating && repeatStart !== null && repeatEnd !== null) {
-    if (videoPlayer.currentTime > repeatEnd) {
-      videoPlayer.currentTime = repeatStart;
-      videoPlayer.play();
+  
+  function showToast(message) {
+    const container = document.getElementById('toastContainer');
+    const MAX_TOASTS = 3;
+    while (container.children.length >= MAX_TOASTS) {
+      container.removeChild(container.firstChild);
     }
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.textContent = message;
+    container.appendChild(toast);
+    toast.addEventListener('animationend', () => {
+      toast.remove();
+    });
   }
-});
-
-// 区間リセット
-function resetRepeat() {
-  repeatStart = null;
-  repeatEnd = null;
-  updateMarkers();
-  repeatRangeDisplay.textContent = 'リピート区間: 未設定';
-}
-
-// リピート区間リセットボタン
-resetButton.addEventListener('click', () => {
-  resetRepeat();
-});
-
-// 再生速度変更同期
-speedRange.addEventListener('input', () => {
-  speedValue.value = speedRange.value;
-  videoPlayer.playbackRate = parseFloat(speedRange.value);
-});
-speedValue.addEventListener('change', () => {
-  let val = parseFloat(speedValue.value);
-  if (isNaN(val)) val = 1;
-  if (val < 0.25) val = 0.25;
-  if (val > 4) val = 4;
-  speedValue.value = val.toFixed(2);
-  speedRange.value = val;
-  videoPlayer.playbackRate = val;
-});
-
-// キーボードショートカット
-window.addEventListener('keydown', (e) => {
-  if (e.target.tagName === 'INPUT') return; // 入力中は無視
-  switch(e.key.toLowerCase()) {
-    case 'z':
-      if (videoPlayer.duration) {
-        repeatStart = videoPlayer.currentTime;
-        updateMarkers();
-        updateRepeatDisplay();
-      }
-      break;
-    case 'x':
-      if (videoPlayer.duration) {
-        if (repeatStart !== null && videoPlayer.currentTime <= repeatStart) {
-          alert('終了位置は開始位置より後に設定してください。');
-          break;
-        }
-        repeatEnd = videoPlayer.currentTime;
-        updateMarkers();
-        updateRepeatDisplay();
-      }
-      break;
-    case 'c':
-      resetRepeat();
-      break;
-    case 'v':
-      if (repeatStart !== null) {
-        videoPlayer.currentTime = repeatStart;
-      }
-      break;
-    case ' ':
-      e.preventDefault();
-      if (videoPlayer.paused) videoPlayer.play();
-      else videoPlayer.pause();
-      break;
-  }
-});
-
-// ボタン操作で区間設定
-setStartBtn.addEventListener('click', () => {
-  if (videoPlayer.duration) {
-    repeatStart = videoPlayer.currentTime;
-    updateMarkers();
-    updateRepeatDisplay();
-  }
-});
-setEndBtn.addEventListener('click', () => {
-  if (videoPlayer.duration) {
-    if (repeatStart !== null && videoPlayer.currentTime <= repeatStart) {
-      alert('終了位置は開始位置より後に設定してください。');
+  
+  function setStartTime() {
+    if (!videoPlayer.duration) return;
+    const currentTime = videoPlayer.currentTime;
+    if (repeatEnd !== null && currentTime >= repeatEnd) {
+      showToast('開始位置は終了位置より前に設定してください。');
       return;
     }
-    repeatEnd = videoPlayer.currentTime;
+    repeatStart = currentTime;
+    updateUI();
+    showToast(`開始位置を設定: ${formatTime(repeatStart)}`);
+  }
+
+  function setEndTime() {
+    if (!videoPlayer.duration) return;
+    const currentTime = videoPlayer.currentTime;
+    if (repeatStart === null || currentTime <= repeatStart) {
+      const message = repeatStart === null
+        ? '先に開始位置を設定してください。'
+        : '終了位置は開始位置より後に設定してください。';
+      showToast(message);
+      return;
+    }
+    repeatEnd = currentTime;
+    updateUI();
+    showToast(`終了位置を設定: ${formatTime(repeatEnd)}`);
+  }
+
+  function resetRepeat() {
+    repeatStart = null;
+    repeatEnd = null;
+    updateUI();
+    showToast('リピート区間をリセットしました。');
+  }
+
+  function goToStart() {
+    if (repeatStart !== null) {
+      videoPlayer.currentTime = repeatStart;
+    }
+  }
+  
+  function togglePlayPause() {
+    if (videoPlayer.paused) {
+      videoPlayer.play();
+    } else {
+      videoPlayer.pause();
+    }
+  }
+
+  function setPlaybackSpeed(speed, showNotice = false) {
+    if (isNaN(speed) || !videoPlayer.duration) return;
+    const validatedSpeed = Math.max(0.25, Math.min(speed, 4));
+    videoPlayer.playbackRate = validatedSpeed;
+    speedRange.value = validatedSpeed;
+    speedValue.value = validatedSpeed.toFixed(2);
+    if (showNotice) {
+      showToast(`再生速度: ${validatedSpeed.toFixed(2)}x`);
+    }
+  }
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      const requestMethod = videoContainer.requestFullscreen || videoContainer.mozRequestFullScreen || videoContainer.webkitRequestFullScreen || videoContainer.msRequestFullscreen;
+      if (requestMethod) {
+        requestMethod.call(videoContainer);
+      }
+    } else {
+      const exitMethod = document.exitFullscreen || document.mozCancelFullScreen || document.webkitExitFullscreen || document.msExitFullscreen;
+      if (exitMethod) {
+        exitMethod.call(document);
+      }
+    }
+  }
+
+  function updateFullscreenIcon() {
+    fullscreenBtn.innerHTML = document.fullscreenElement ? EXIT_FULLSCREEN_ICON : FULLSCREEN_ICON;
+  }
+  
+  function updateMarkers() {
+    const duration = videoPlayer.duration;
+    if (!duration) return;
+
+    startMarker.style.display = repeatStart !== null ? 'block' : 'none';
+    if (repeatStart !== null) {
+      startMarker.style.left = (repeatStart / duration * 100) + '%';
+    }
+    endMarker.style.display = repeatEnd !== null ? 'block' : 'none';
+    if (repeatEnd !== null) {
+      endMarker.style.left = (repeatEnd / duration * 100) + '%';
+    }
+
+    if (repeatStart !== null && repeatEnd !== null) {
+      const startPercent = (repeatStart / duration) * 100;
+      const endPercent = (repeatEnd / duration) * 100;
+      const widthPercent = endPercent - startPercent;
+      repeatRangeBar.style.left = `${startPercent}%`;
+      repeatRangeBar.style.width = `${widthPercent}%`;
+      repeatRangeBar.style.display = 'block';
+    } else {
+      repeatRangeBar.style.display = 'none';
+    }
+  }
+
+  function updateProgressUI() {
+    if (!videoPlayer.duration) return;
+    const percent = (videoPlayer.currentTime / videoPlayer.duration) * 100;
+    progressBar.style.width = percent + '%';
+    currentMarker.style.left = percent + '%';
+  }
+
+  function formatTime(seconds) {
+    if (isNaN(seconds)) return '00:00';
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  }
+
+  function updateTimeDisplay() {
+    const current = formatTime(videoPlayer.currentTime);
+    const duration = formatTime(videoPlayer.duration);
+    timeDisplay.textContent = `${current} / ${duration}`;
+  }
+
+  function updateRepeatDisplay() {
+    const startStr = repeatStart !== null ? formatTime(repeatStart) : '未設定';
+    const endStr = repeatEnd !== null ? formatTime(repeatEnd) : '未設定';
+    repeatRangeDisplay.textContent = `リピート区間: ${startStr} - ${endStr}`;
+  }
+
+  function updateUI() {
     updateMarkers();
     updateRepeatDisplay();
   }
-});
-goStartBtn.addEventListener('click', () => {
-  if (repeatStart !== null) {
-    videoPlayer.currentTime = repeatStart;
+  
+  function showPlayPauseIcon(isPaused) {
+    playPauseIcon.className = isPaused ? 'pause' : 'play';
+    videoOverlay.classList.add('show');
+    setTimeout(() => videoOverlay.classList.remove('show'), 500);
   }
-});
 
-// リピート区間表示更新
-function updateRepeatDisplay() {
-  const startStr = repeatStart !== null ? repeatStart.toFixed(2) : '未設定';
-  const endStr = repeatEnd !== null ? repeatEnd.toFixed(2) : '未設定';
-  repeatRangeDisplay.textContent = `リピート区間: 開始 ${startStr} 秒 - 終了 ${endStr} 秒`;
-}
+  const handleDragMove = (e) => {
+    if (!isDragging || !videoPlayer.duration) return;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const rect = progressBarContainer.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const newTime = ratio * videoPlayer.duration;
+    
+    videoPlayer.currentTime = newTime;
+    updateProgressUI(); 
+  };
 
-// テーマ切り替え（簡易版）
-themeToggleBtn.addEventListener('click', () => {
-  document.body.classList.toggle('light-theme');
-  if (document.body.classList.contains('light-theme')) {
-    themeToggleBtn.textContent = '🌙';
-  } else {
-    themeToggleBtn.textContent = '☀️';
-  }
-});
+  const handleDragEnd = () => {
+    if (!isDragging) return;
+    isDragging = false;
+    document.body.classList.remove('is-scrubbing');
+    window.removeEventListener('mousemove', handleDragMove);
+    window.removeEventListener('mouseup', handleDragEnd);
+    window.removeEventListener('touchmove', handleDragMove);
+    window.removeEventListener('touchend', handleDragEnd);
+  };
+  
+  const handleDragStart = (e) => {
+    if (!videoPlayer.duration) return;
+    e.preventDefault();
+    isDragging = true;
+    document.body.classList.add('is-scrubbing');
+    handleDragMove(e);
+    window.addEventListener('mousemove', handleDragMove);
+    window.addEventListener('mouseup', handleDragEnd);
+    window.addEventListener('touchmove', handleDragMove);
+    window.addEventListener('touchend', handleDragEnd);
+  };
+  
+  const showMobileControls = () => {
+    videoContainer.classList.add('mobile-controls-visible');
+    clearTimeout(controlsTimer);
+    controlsTimer = setTimeout(() => {
+      videoContainer.classList.remove('mobile-controls-visible');
+    }, 3000);
+  };
+  
+  // --- イベントリスナー設定 ---
 
-// モバイルか判定してモバイル用ボタン表示切り替え
-function detectMobile() {
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  if (isMobile) {
-    mobileControls.style.display = 'block';
-  } else {
-    mobileControls.style.display = 'none';
-  }
-}
-detectMobile();
-// 動画タップで再生/停止切替（スマホでの操作補助）
-videoPlayer.addEventListener('click', () => {
-  if (videoPlayer.paused) videoPlayer.play();
-  else videoPlayer.pause();
-});
-progressBarContainer.addEventListener('touchend', (e) => {
-  if (!videoPlayer.duration) return;
-  const touch = e.changedTouches[0];
-  const rect = progressBarContainer.getBoundingClientRect();
-  const clickRatio = (touch.clientX - rect.left) / rect.width;
-  const clickedTime = videoPlayer.duration * clickRatio;
-  videoPlayer.currentTime = clickedTime;
-  e.preventDefault();
+  videoInput.addEventListener('change', () => {
+    const file = videoInput.files[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      videoPlayer.src = url;
+      videoContainer.style.display = 'block';
+      videoUploadContainer.style.display = 'none';
+      videoPlayer.play();
+      repeatStart = null;
+      repeatEnd = null;
+      updateUI();
+    }
+  });
+
+  progressBarContainer.addEventListener('mousedown', handleDragStart);
+  progressBarContainer.addEventListener('touchstart', handleDragStart);
+
+  progressBarContainer.addEventListener('mousemove', (e) => {
+    if (!videoPlayer.duration) return;
+    const rect = progressBarContainer.getBoundingClientRect();
+    const hoverRatio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const hoverTime = videoPlayer.duration * hoverRatio;
+    progressTimeTooltip.textContent = formatTime(hoverTime);
+    progressTimeTooltip.style.left = `${hoverRatio * 100}%`;
+  });
+
+  videoPlayer.addEventListener('timeupdate', () => {
+    if (!isDragging) {
+      updateProgressUI();
+    }
+    updateTimeDisplay();
+    if (isRepeating && repeatStart !== null && repeatEnd !== null) {
+      if (videoPlayer.currentTime >= repeatEnd || videoPlayer.currentTime < repeatStart) {
+        videoPlayer.currentTime = repeatStart;
+        if (videoPlayer.paused) videoPlayer.play();
+      }
+    }
+  });
+  
+  videoPlayer.addEventListener('loadedmetadata', updateTimeDisplay);
+  videoPlayer.addEventListener('play', () => showPlayPauseIcon(false));
+  videoPlayer.addEventListener('pause', () => showPlayPauseIcon(true));
+  
+  videoPlayer.addEventListener('click', () => {
+    if (isMobile) {
+      if (videoContainer.classList.contains('mobile-controls-visible')) {
+        togglePlayPause();
+        clearTimeout(controlsTimer);
+        videoContainer.classList.remove('mobile-controls-visible');
+      } else {
+        showMobileControls();
+      }
+    } else {
+      togglePlayPause();
+    }
+  });
+  
+  setStartBtn.addEventListener('click', setStartTime);
+  setEndBtn.addEventListener('click', setEndTime);
+  goStartBtn.addEventListener('click', goToStart);
+  resetButton.addEventListener('click', resetRepeat);
+  
+  speedRange.addEventListener('input', (e) => setPlaybackSpeed(parseFloat(e.target.value)));
+  speedValue.addEventListener('change', (e) => setPlaybackSpeed(parseFloat(e.target.value)));
+  
+  fullscreenBtn.addEventListener('click', toggleFullscreen);
+  ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(event =>
+    document.addEventListener(event, updateFullscreenIcon)
+  );
+
+  window.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT') return;
+    
+    const keysToPrevent = [' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'f'];
+    if (keysToPrevent.includes(e.key.toLowerCase())) {
+      e.preventDefault();
+    }
+
+    switch(e.key.toLowerCase()) {
+      case 'z': setStartTime(); break;
+      case 'x': setEndTime(); break;
+      case 'c': resetRepeat(); break;
+      case 'v': goToStart(); break;
+      case ' ': togglePlayPause(); break;
+      case 'arrowright': setPlaybackSpeed(videoPlayer.playbackRate + 0.1, true); break;
+      case 'arrowleft': setPlaybackSpeed(videoPlayer.playbackRate - 0.1, true); break;
+      case 'arrowup': setPlaybackSpeed(videoPlayer.playbackRate + 0.01, true); break;
+      case 'arrowdown': setPlaybackSpeed(videoPlayer.playbackRate - 0.01, true); break;
+      case 'f': toggleFullscreen(); break;
+    }
+  });
+  
+  themeToggleBtn.addEventListener('click', () => {
+    document.body.classList.toggle('light-theme');
+    themeToggleBtn.textContent = document.body.classList.contains('light-theme') ? '☀️' : '🌙';
+  });
+  
+  // 初期化処理
+  updateUI();
 });
