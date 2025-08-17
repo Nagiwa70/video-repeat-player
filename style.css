@@ -143,6 +143,12 @@ h1 {
   cursor: pointer;
 }
 
+/* --- ここからが修正箇所 --- */
+#videoContainer.is-inactive {
+  cursor: none; /* UI非表示時にカーソルも隠す */
+}
+/* --- ここまでが修正箇所 --- */
+
 #videoPlayer {
   width: 100%;
   display: block;
@@ -222,6 +228,11 @@ h1 {
 #videoContainer.mobile-controls-visible #videoControls {
   opacity: 1;
 }
+
+#videoContainer.is-inactive #videoControls {
+  opacity: 0;
+}
+
 
 #videoControls > * {
   pointer-events: auto;

@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let isDragging = false;
   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   let controlsTimer = null;
+  let inactiveTimer = null;
 
   // --- マーカー作成 ---
   const startMarker = createMarker('startMarker');
@@ -69,29 +70,31 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
   
-  function setStartTime() {
+  function setStartTime(time) {
     if (!videoPlayer.duration) return;
-    const currentTime = videoPlayer.currentTime;
-    if (repeatEnd !== null && currentTime >= repeatEnd) {
+    const newStartTime = (time !== undefined) ? time : videoPlayer.currentTime;
+    
+    if (repeatEnd !== null && newStartTime >= repeatEnd) {
       showToast('開始位置は終了位置より前に設定してください。');
       return;
     }
-    repeatStart = currentTime;
+    repeatStart = newStartTime;
     updateUI();
     showToast(`開始位置を設定: ${formatTime(repeatStart)}`);
   }
 
-  function setEndTime() {
+  function setEndTime(time) {
     if (!videoPlayer.duration) return;
-    const currentTime = videoPlayer.currentTime;
-    if (repeatStart === null || currentTime <= repeatStart) {
+    const newEndTime = (time !== undefined) ? time : videoPlayer.currentTime;
+
+    if (repeatStart === null || newEndTime <= repeatStart) {
       const message = repeatStart === null
         ? '先に開始位置を設定してください。'
         : '終了位置は開始位置より後に設定してください。';
       showToast(message);
       return;
     }
-    repeatEnd = currentTime;
+    repeatEnd = newEndTime;
     updateUI();
     showToast(`終了位置を設定: ${formatTime(repeatEnd)}`);
   }
@@ -221,6 +224,16 @@ document.addEventListener('DOMContentLoaded', () => {
     clearTimeout(controlsTimer);
     controlsTimer = setTimeout(hideMobileControls, 3000);
   }
+  
+  function resetInactiveTimer() {
+    clearTimeout(inactiveTimer);
+    videoContainer.classList.remove('is-inactive');
+    if (document.fullscreenElement && !isMobile) {
+      inactiveTimer = setTimeout(() => {
+        videoContainer.classList.add('is-inactive');
+      }, 3000);
+    }
+  }
 
   const handleDragMove = (e) => {
     if (!isDragging || !videoPlayer.duration) return;
@@ -244,7 +257,9 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   
   const handleDragStart = (e) => {
-    if (!videoPlayer.duration) return;
+    if (!videoPlayer.duration || e.shiftKey || e.altKey) {
+        return;
+    }
     e.preventDefault();
     isDragging = true;
     document.body.classList.add('is-scrubbing');
@@ -271,8 +286,35 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // --- ここからが修正箇所 ---
+  
+  // ドラッグ操作は mousedown で開始
   progressBarContainer.addEventListener('mousedown', handleDragStart);
   progressBarContainer.addEventListener('touchstart', handleDragStart);
+
+  // クリック操作（シークとリピート設定）は click イベントで処理
+  progressBarContainer.addEventListener('click', (e) => {
+    if (!videoPlayer.duration || isDragging) return;
+
+    const rect = progressBarContainer.getBoundingClientRect();
+    const ratio = (e.clientX - rect.left) / rect.width;
+    const clickedTime = videoPlayer.duration * ratio;
+
+    if (e.shiftKey && e.altKey) {
+      // Shift + Alt + クリック: 終了位置を設定 (シークしない)
+      e.preventDefault();
+      setEndTime(clickedTime);
+    } else if (e.shiftKey) {
+      // Shift + クリック: 開始位置を設定 (シークしない)
+      e.preventDefault();
+      setStartTime(clickedTime);
+    } else {
+      // 通常のクリック: 再生位置をシークする
+      videoPlayer.currentTime = clickedTime;
+    }
+  });
+
+  // --- ここまでが修正箇所 ---
 
   progressBarContainer.addEventListener('mousemove', (e) => {
     if (!videoPlayer.duration) return;
@@ -300,18 +342,13 @@ document.addEventListener('DOMContentLoaded', () => {
   videoPlayer.addEventListener('play', updateCentralPlayPauseIcon);
   videoPlayer.addEventListener('pause', updateCentralPlayPauseIcon);
   
-  // --- ここからが修正箇所 ---
-  
   videoContainer.addEventListener('click', (e) => {
-    // どのUI要素の上でクリックされたかをチェックする
     const clickedOnUI = 
         e.target === progressBarContainer || progressBarContainer.contains(e.target) ||
         e.target === fullscreenBtn || fullscreenBtn.contains(e.target);
 
     if (isMobile) {
-      // --- スマホの操作 ---
       if (videoContainer.classList.contains('mobile-controls-visible')) {
-        // UI表示中のタップ
         if (e.target === playPauseIcon) {
           togglePlayPause();
           hideMobileControls();
@@ -319,23 +356,18 @@ document.addEventListener('DOMContentLoaded', () => {
           hideMobileControls();
         }
       } else {
-        // UI非表示中のタップ -> UIを表示
         showMobileControls();
       }
     } else {
-      // --- PCの操作 ---
-      // UI要素(プログレスバーや全画面ボタン)以外をクリックした場合のみ再生/停止
       if (!clickedOnUI) {
         togglePlayPause();
         flashPlayPauseIcon();
       }
     }
   });
-
-  // --- ここまでが修正箇所 ---
   
-  setStartBtn.addEventListener('click', setStartTime);
-  setEndBtn.addEventListener('click', setEndTime);
+  setStartBtn.addEventListener('click', () => setStartTime());
+  setEndBtn.addEventListener('click', () => setEndTime());
   goStartBtn.addEventListener('click', goToStart);
   resetButton.addEventListener('click', resetRepeat);
   
@@ -343,13 +375,29 @@ document.addEventListener('DOMContentLoaded', () => {
   speedValue.addEventListener('change', (e) => setPlaybackSpeed(parseFloat(e.target.value)));
   
   fullscreenBtn.addEventListener('click', (e) => {
-      e.stopPropagation(); // videoContainerへのクリックイベントの伝播を停止
+      e.stopPropagation();
       toggleFullscreen();
   });
+  
+  function handleFullscreenChange() {
+    updateFullscreenIcon();
+    if (document.fullscreenElement && !isMobile) {
+      resetInactiveTimer();
+    } else {
+      clearTimeout(inactiveTimer);
+      videoContainer.classList.remove('is-inactive');
+    }
+  }
 
   ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(event =>
-    document.addEventListener(event, updateFullscreenIcon)
+    document.addEventListener(event, handleFullscreenChange)
   );
+  
+  videoContainer.addEventListener('mousemove', () => {
+      if (!isMobile && document.fullscreenElement) {
+          resetInactiveTimer();
+      }
+  });
 
   window.addEventListener('keydown', (e) => {
     if (e.target.tagName === 'INPUT') return;
